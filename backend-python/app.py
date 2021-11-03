@@ -11,10 +11,10 @@ def create_app(config_filename):
     # Ensure a connection can 
     import database
     with app.app_context():
-        database.init_db()
+        database.init_app(app)
 
-    from . import search
-    app.register_blueprint(search.bp)
+    import movies
+    movies.init_app(app)
 
     import cli
     cli.init_app(app)

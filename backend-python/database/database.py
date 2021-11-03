@@ -1,10 +1,8 @@
 import pymysql
 from pymysql.constants import CLIENT
+from elasticsearch import Elasticsearch
 
 from flask import current_app, g
-
-def init_db():
-    get_db()
 
 def get_db():
     if 'db' not in g:
@@ -17,3 +15,9 @@ def get_db():
         )
 
     return g.db
+
+def get_es():
+    if 'es' not in g:
+        g.es =  Elasticsearch(["search:9200"])
+
+    return g.es

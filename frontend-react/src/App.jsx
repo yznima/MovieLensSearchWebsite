@@ -1,6 +1,6 @@
 import 'semantic-ui-css/semantic.min.css';
 import React, { Component } from 'react';
-import { Card, Divider, Dropdown, Pagination, Search, Segment } from 'semantic-ui-react';
+import { Card, Divider, Dropdown, Pagination, Search, Segment, Label } from 'semantic-ui-react';
 import MovieCard from './components/MovieCard';
 import { SearchMovies, SearchTags } from './apis/search';
 
@@ -26,12 +26,12 @@ class App extends Component {
   dispatch = (action, payload) => {
     switch (action) {
       case "UPDATE_SEARCH_RESULT": {
-        const query = this.state.query;
+        const { query } = payload;
         const active = this.state.page.active;
         const tags = this.state.tags;
         return SearchMovies(query, tags, PAGE_SIZE, active)
           .then((json) => {
-            this.setState({ result: json.result, page: { active: 1, totalCount: json.totalCount } });
+            this.setState({ result: json.result, query: query, page: { active: 1, totalCount: json.totalCount } });
           }).catch((err) => {
             this.setState({ err });
           })
@@ -77,12 +77,9 @@ class App extends Component {
               console.log(data)
             }
             onSearchChange={(e) => {
-              const query = e.target.value
-              this.setState({ query: query, page: { active: 1, totalCount: 1 } });
-              const active = this.state.page.active;
-              const tags = this.state.tags;
               this.setState({ loading: true });
-              this.dispatch("UPDATE_SEARCH_RESULT")
+              this.dispatch("UPDATE_SEARCH_RESULT", { query: e.target.value })
+                .finally(() => this.setState({ loading: false }))
             }}
 
             showNoResults={this.state.result.length == 0}
@@ -95,6 +92,7 @@ class App extends Component {
             multiple
             selection
             search
+            showNoResults={this.state.tagsQuery != ""}
             onSearchChange={(e) => {
               const query = e.target.value
               this.setState({ tagsQuery: query })
@@ -121,9 +119,7 @@ class App extends Component {
             }}
             value={this.state.tags}
           />
-          <ul>
-            {this.state.tags.map(tag => <li key={tag}>{tag}</li>)}
-          </ul>
+          {this.state.tags.map(tag => <Label key={tag} tag>{tag}</Label>)}
         </div>
         <Divider />
         <Segment>
@@ -134,6 +130,8 @@ class App extends Component {
                 name={movie.title}
                 imdb={movie.imdb}
                 tmdb={movie.tmdb}
+                genres={movie.genres}
+                rating={movie.rating}
               />)) : <></>
             }
           </Card.Group>
@@ -144,9 +142,9 @@ class App extends Component {
         }}>
           <Pagination
             siblingRange={1}
-            totalPages={Math.max(1, (this.state.page.totalCount / PAGE_SIZE) | 0)}
+            totalPages={Math.ceil(this.state.page.totalCount / PAGE_SIZE)}
             activePage={this.state.page.active}
-            disabled={(this.state.page.totalCount / PAGE_SIZE) < 1}
+            disabled={Math.ceil(this.state.page.totalCount / PAGE_SIZE) == 1}
             onPageChange={(e, data) => {
               this.dispatch("UPDATE_PAGE", { active: data.activePage });
             }}
@@ -156,7 +154,7 @@ class App extends Component {
     );
   }
   componentDidMount() {
-    this.dispatch("UPDATE_SEARCH_RESULT");
+    this.dispatch("UPDATE_SEARCH_RESULT", { query: '' });
   }
 }
 

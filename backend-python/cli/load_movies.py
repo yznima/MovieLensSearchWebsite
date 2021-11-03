@@ -117,10 +117,10 @@ def insert_to_elasticsearch(db):
                 "type": "float"
             },
             "genres": {
-                "type": "text"
+                "type": "keyword"
             },
             "tags": {
-                "type": "text"
+                "type": "keyword"
             }
         }
     }
@@ -155,6 +155,7 @@ def insert_to_elasticsearch(db):
             '_id': rating[0],
             'doc': {'rating': rating[1]},
         })
+    result = bulk(es, actions)
     
     with db.cursor() as cur:
         cur.execute('SELECT movie_id, genre FROM genres')
@@ -175,7 +176,6 @@ def insert_to_elasticsearch(db):
              '_id': movie_id,
              'doc': {'genres': actions_dict[movie_id]},
          })
-
     result = bulk(es, actions)
 
     with db.cursor() as cur:
